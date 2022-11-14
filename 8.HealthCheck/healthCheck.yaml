@@ -1,0 +1,41 @@
+apiVersion: v1 # pod version
+kind: Pod # type pod / container
+metadata:
+  name: healthCheckApp # name
+  labels:
+    name: healthCheckExec # label name
+spec:
+  containers:
+  - name: healthCheckApp # container name
+    image: busybox # base image
+    args: # command too run
+      - /bin/sh # using bin/sh command line
+      - -c
+      - touch /tmp/healthy; sleep 30; rm -f /tmp/healthy; sleep 600 # we are creating a file name healthy then sleeping for 30sec, then removing that file then sleeping for 600sec
+    resources: # resource limitation 
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    livenessProbe: # liveness probe 
+      exec:
+        command: # command to execute to check weather the pod is working or not, this can have our own logic
+          - cat
+          - /tmp/healthy
+        initialDelaySeconds: 5 # wait for 5 second before starting first liveness check
+        perodSeconds: 5 # will have to check liveness in every 5 seconds
+    startupProbe: # this will wait maximum 30 * 10 = 300 which is 5 mins to finish startup of application
+      exec:
+        command:
+          - cat
+          - /tmp/healthy
+        failureThreshold: 30 # how many time to try before giving fail
+        periodSeconds: 10  # after every sec check
+    readinessProbe:
+      exec:
+        command:
+        - cat
+        - /tmp/healthy
+      initialDelaySeconds: 5 # wait for 5 sec before checking first readnesscheck
+      periodSeconds: 5 # how often we have to check
+    #ports:
+    #  - containerPort: <Port>
